@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signIn.dto';
+import { SignUpDto } from './dto/signUp.dto';
 import { AuthGuard } from './guards/auth.guard';
 
 @Controller('auth')
@@ -18,8 +19,13 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  login(@Body() input: SignInDto) {
+  async login(@Body() input: SignInDto) {
     return this.authService.authenticate(input);
+  }
+
+  @Post('signup')
+  async sigin(@Body() input: SignUpDto) {
+    return this.authService.signUp(input);
   }
 
   @UseGuards(AuthGuard)

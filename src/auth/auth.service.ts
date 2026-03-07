@@ -1,13 +1,15 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { SignUpDto } from './dto/signUp.dto';
+import { SignInDto } from './dto/signIn.dto';
 
 interface AuthInput {
-  username: string;
+  email: string;
   password: string;
 }
-type SignInData = { userId: number; username: string };
-type AuthResult = { accessToken: string; userId: number; username: string };
+type SignInData = { userId: string; username: string };
+type AuthResult = { accessToken: string; userId: string; username: string };
 
 @Injectable()
 export class AuthService {
@@ -16,17 +18,17 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async authenticate(input: AuthInput): Promise<AuthResult> {
+  async authenticate(input: SignInDto): Promise<AuthResult> {
     const user = await this.validateUser(input);
     if (!user) {
       throw new UnauthorizedException();
     }
 
-    return await this.signIn(user);
+    return this.signIn(user);
   }
 
   async validateUser(input: AuthInput): Promise<SignInData | null> {
-    const user = await this.usersService.findUserByName(input.username);
+    const user = await this.usersService.findUserByEmail(input.email);
 
     if (user && user.password === input.password) {
       return {
@@ -48,5 +50,10 @@ export class AuthService {
       userId: user.userId,
       username: user.username,
     };
+  }
+
+  async signUp(input: SignUpDto): Promise<AuthResult> {
+    const newUser = await this.usersService.createUser(input);
+    return this.signIn(newUser);
   }
 }
