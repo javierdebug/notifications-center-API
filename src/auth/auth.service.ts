@@ -8,8 +8,8 @@ interface AuthInput {
   email: string;
   password: string;
 }
-type SignInData = { userId: string; username: string };
-type AuthResult = { accessToken: string; userId: string; username: string };
+type SignInData = { id: number; username: string };
+type AuthResult = { accessToken: string; id: number; username: string };
 
 @Injectable()
 export class AuthService {
@@ -32,7 +32,7 @@ export class AuthService {
 
     if (user && user.password === input.password) {
       return {
-        userId: user.userId,
+        id: user.id,
         username: user.username,
       };
     }
@@ -41,13 +41,13 @@ export class AuthService {
   }
 
   async signIn(user: SignInData): Promise<AuthResult> {
-    const tokenPayload = { sub: user.userId, username: user.username };
+    const tokenPayload = { sub: user.id, username: user.username };
 
     const accessToken = await this.jwtService.signAsync(tokenPayload);
 
     return {
       accessToken,
-      userId: user.userId,
+      id: user.id,
       username: user.username,
     };
   }
