@@ -26,7 +26,7 @@ export class UsersController {
 
   @HttpCode(HttpStatus.OK)
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: number) {
     const existingUser = await this.usersService.findUserById(id);
     if (!existingUser) {
       throw new NotFoundException();
@@ -43,14 +43,14 @@ export class UsersController {
 
   @HttpCode(HttpStatus.OK)
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
     const updatedUser = await this.usersService.updateUser(id, updateUserDto);
     return updatedUser;
   }
 
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id') id: number) {
     return this.usersService.deleteUser(id);
   }
 }
