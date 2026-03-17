@@ -3,52 +3,36 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { InjectRepository } from '@nestjs/typeorm';
 import { SignUpDto } from 'src/auth/dto/signUp.dto';
-
-export interface User {
-  userId: string;
-  username: string;
-  email: string;
-  password: string;
-}
-
-//TODO: mock data, remove later
-const usersMock: User[] = [
-  {
-    userId: randomUUID(),
-    username: 'Javier',
-    email: 'javier@javierd.com',
-    password: 'password',
-  },
-  {
-    userId: randomUUID(),
-    username: 'Milena',
-    email: 'milena@javierd.com',
-    password: 'passwordMilena',
-  },
-];
+import { Repository } from 'typeorm';
+import { UserEntity as User } from './entity/user.entity';
 
 @Injectable()
 export class UsersService {
-  async findAllUsers(): Promise<User[] | undefined> {
-    return usersMock;
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
+
+  async findAllUsers(): Promise<User[]> {
+    return this.usersRepository.find();
   }
 
-  async findUserById(id: string): Promise<User | undefined> {
-    const existingUser = await usersMock.find((user) => user.userId === id);
+  async findUserById(id: number): Promise<User | null> {
+    return this.usersRepository.findOneBy({ id });
+  }
+
+  async findUserByName(username: string): Promise<User | null> {
+    const existingUser = await this.usersRepository.findOneBy({
+      username: username,
+    });
+
     return existingUser;
   }
 
-  async findUserByName(username: string): Promise<User | undefined> {
-    const existingUser = await usersMock.find(
-      (user) => user.username === username,
-    );
-    return existingUser;
-  }
-
-  async findUserByEmail(email: string): Promise<User | undefined> {
-    const existingUser = await usersMock.find((user) => user.email === email);
+  async findUserByEmail(email: string): Promise<User | null> {
+    const existingUser = await this.usersRepository.findOneBy({ email });
     return existingUser;
   }
 
@@ -58,39 +42,35 @@ export class UsersService {
       throw new BadRequestException('Email already registered');
     }
 
-    const newUser: User = {
-      userId: randomUUID(),
-      ...user,
-    };
-    usersMock.push(newUser);
+    const newUser: User = this.usersRepository.create(user);
+    await this.usersRepository.save(newUser);
     return newUser;
   }
 
-  async updateUser(id: string, user: SignUpDto): Promise<User> {
+  async updateUser(id: number, user: SignUpDto): Promise<User> {
     const existingUser = await this.findUserById(id);
     if (!existingUser) {
       throw new NotFoundException('User not registered');
     }
 
     const updatedUser: User = {
-      userId: existingUser.userId,
+      id: existingUser.id,
       email: user.email,
       username: user.username,
       password: user.password,
     };
     await this.deleteUser(id);
-    usersMock.push(updatedUser);
+    const newUser: User = this.usersRepository.create(user);
+    await this.usersRepository.save(newUser);
     return updatedUser;
   }
 
-  async deleteUser(id: string): Promise<void> {
+  async deleteUser(id: number): Promise<void> {
     const existingUser = await this.findUserById(id);
     if (!existingUser) {
       throw new NotFoundException('User not registered');
     }
 
-    const newUsersMock = usersMock.filter((user) => user.userId !== id);
-    usersMock.length = 0;
-    usersMock.push(...newUsersMock);
+    await this.usersRepository.delete(id);
   }
 }
